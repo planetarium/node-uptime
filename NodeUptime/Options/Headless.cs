@@ -10,4 +10,4 @@ namespace NodeUptime.Options
 
         public string JwtSecretKey { get; init; }
     }
-} 
+}

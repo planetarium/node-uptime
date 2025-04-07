@@ -72,11 +72,13 @@ public class HeadlessGQLClient
                 response.EnsureSuccessStatusCode();
 
                 var jsonResponse = await response.Content.ReadAsStringAsync(stoppingToken);
-                var graphQLResponse = JsonSerializer.Deserialize<GraphQLResponse<T>>(
-                    jsonResponse
-                );
+                var graphQLResponse = JsonSerializer.Deserialize<GraphQLResponse<T>>(jsonResponse);
 
-                if (graphQLResponse is null || graphQLResponse.Data is null || graphQLResponse.Errors is not null)
+                if (
+                    graphQLResponse is null
+                    || graphQLResponse.Data is null
+                    || graphQLResponse.Errors is not null
+                )
                 {
                     throw new HttpRequestException("Response data is null.");
                 }
@@ -86,7 +88,6 @@ public class HeadlessGQLClient
             catch (Exception)
             {
                 await Task.Delay(TimeSpan.FromSeconds(DelayInSeconds), stoppingToken);
-                throw;
             }
         }
 

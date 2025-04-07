@@ -1,9 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using NodeUptime.Client;
-using Xunit;
-using Microsoft.Extensions.Options;
 
 namespace NodeUptime.BlockTests
 {
@@ -17,12 +12,18 @@ namespace NodeUptime.BlockTests
         }
 
         [Theory]
-        [InlineData(Constants.Planets.ODIN)]
-        [InlineData(Constants.Planets.HEIMDALL)]
-        public async Task Block_Timestamp_Should_Be_Recent(string planet)
+        [InlineData("OdinRpc1", "Odin")]
+        [InlineData("HeimdallRpc1", "Heimdall")]
+        [InlineData("OdinRpc2", "Odin")]
+        [InlineData("HeimdallRpc2", "Heimdall")]
+        [InlineData("OdinValidator5", "Odin")]
+        [InlineData("HeimdallValidator1", "Heimdall")]
+        [InlineData("OdinEksRpc1", "Odin")]
+        [InlineData("HeimdallEksRpc1", "Heimdall")]
+        public async Task Block_Timestamp_Should_Be_Recent(string headlessKey, string routingKey)
         {
             // Arrange
-            var headlessUrl = Constants.JWT_HEADLESS_URLS[planet];
+            var headlessUrl = Constants.HEADLESS_URLS[headlessKey];
             var headlessOptions = _fixture.HeadlessOptions.Value;
 
             var client = new HeadlessGQLClient(
@@ -31,23 +32,69 @@ namespace NodeUptime.BlockTests
                 headlessOptions.JwtSecretKey
             );
 
-            // Act
-            var (response, _) = await client.GetBlockTimestampAsync();
+            try
+            {
+                var (response, _) = await client.GetBlockTimestampAsync();
 
-            // The timestamp from the API is in ISO 8601 format
-            var blockTimestamp = DateTime.Parse(response.ChainQuery.BlockQuery.Blocks[0].Timestamp);
-            var currentTime = DateTime.UtcNow;
+                if (
+                    response?.ChainQuery?.BlockQuery?.Blocks != null
+                    && response.ChainQuery.BlockQuery.Blocks.Count > 0
+                    && !string.IsNullOrEmpty(response.ChainQuery.BlockQuery.Blocks[0].Timestamp)
+                )
+                {
+                    var blockTimestamp = DateTime.Parse(
+                        response.ChainQuery.BlockQuery.Blocks[0].Timestamp
+                    );
+                    var currentTime = DateTime.UtcNow;
 
-            // Calculate the difference in seconds
-            var timeDifference = (currentTime - blockTimestamp).TotalSeconds;
+                    var timeDifference = (currentTime - blockTimestamp).TotalSeconds;
 
-            // Assert
-            // Check if the block timestamp is less than 300 seconds (5 minutes) old
-            Assert.True(timeDifference < 300,
-                $"Block timestamp for {planet} is too old. Difference: {timeDifference} seconds.");
+                    var isValid = timeDifference < 300;
 
-            // Output the actual difference for informational purposes
-            Console.WriteLine($"Time difference for {planet}: {timeDifference} seconds");
+                    if (!isValid)
+                    {
+                        var errorMessage =
+                            $"Block timestamp for {headlessKey} is too old. Difference: {timeDifference} seconds.";
+
+                        await _fixture.PagerDutyService.SendAlertAsync(
+                            headlessKey,
+                            routingKey,
+                            errorMessage
+                        );
+
+                        Assert.True(isValid, errorMessage);
+                    }
+                    else
+                    {
+                        var resolveMessage =
+                            $"Block timestamp for {headlessKey} is now valid. Difference: {timeDifference} seconds.";
+                        await _fixture.PagerDutyService.ResolveAlertAsync(
+                            headlessKey,
+                            routingKey,
+                            resolveMessage
+                        );
+                    }
+                }
+                else
+                {
+                    var errorMessage = $"No valid block data received for {headlessKey}";
+                    await _fixture.PagerDutyService.SendAlertAsync(
+                        headlessKey,
+                        routingKey,
+                        errorMessage
+                    );
+                    Assert.True(false, errorMessage);
+                }
+            }
+            catch (Exception ex)
+            {
+                await _fixture.PagerDutyService.SendAlertAsync(
+                    headlessKey,
+                    routingKey,
+                    $"Error checking {headlessKey} block timestamp: {ex.Message}"
+                );
+                throw;
+            }
         }
     }
 }

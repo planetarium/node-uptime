@@ -4,29 +4,24 @@ using System.Collections.ObjectModel;
 
 namespace NodeUptime
 {
-    /// <summary>
-    /// Constants used throughout the application.
-    /// </summary>
     public static class Constants
     {
-        /// <summary>
-        /// Planet names
-        /// </summary>
-        public static class Planets
-        {
-            public const string ODIN = "ODIN";
-            public const string HEIMDALL = "HEIMDALL";
-        }
-
-        /// <summary>
-        /// Dictionary of JWT Headless URLs mapped by planet name
-        /// </summary>
-        public static readonly IReadOnlyDictionary<string, string> JWT_HEADLESS_URLS = 
+        public static readonly IReadOnlyDictionary<string, string> HEADLESS_URLS =
             new ReadOnlyDictionary<string, string>(
                 new Dictionary<string, string>
                 {
-                    { Planets.ODIN, "https://odin-jwt.nine-chronicles.com/graphql" },
-                    { Planets.HEIMDALL, "https://heimdall-jwt.nine-chronicles.com/graphql" }
-                });
+                    { "OdinRpc1", "https://odin-rpc-1.nine-chronicles.com/graphql" },
+                    { "HeimdallRpc1", "https://heimdall-rpc-1.nine-chronicles.com/graphql" },
+                    { "OdinRpc2", "https://odin-rpc-2.nine-chronicles.com/graphql" },
+                    { "HeimdallRpc2", "https://heimdall-rpc-2.nine-chronicles.com/graphql" },
+                    { "OdinValidator5", "https://odin-validator-5.nine-chronicles.com/graphql" },
+                    {
+                        "HeimdallValidator1",
+                        "https://heimdall-validator-1.nine-chronicles.com/graphql"
+                    },
+                    { "OdinEksRpc1", "https://odin-eks-rpc-1.nine-chronicles.com/graphql" },
+                    { "HeimdallEksRpc1", "https://heimdall-eks-rpc-1.nine-chronicles.com/graphql" },
+                }
+            );
     }
 }

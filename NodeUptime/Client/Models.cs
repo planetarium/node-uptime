@@ -23,13 +23,13 @@ public class GraphQLResponse<T>
 public class GetTipResponse
 {
     [JsonPropertyName("nodeStatus")]
-    public NodeStatus NodeStatus { get; set; }
+    public required NodeStatus NodeStatus { get; set; }
 }
 
 public class NodeStatus
 {
     [JsonPropertyName("tip")]
-    public Tip Tip { get; set; }
+    public required Tip Tip { get; set; }
 }
 
 public class Tip
@@ -61,4 +61,3 @@ public class Block
     [JsonPropertyName("timestamp")]
     public string? Timestamp { get; set; }
 }
-

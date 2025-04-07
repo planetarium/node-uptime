@@ -23,6 +23,13 @@ jobs:
           dotnet-version: 8.0.x
 
       - name: Run Tests
+        env:
+          NodeUptime_Headless__JwtIssuer: ${{ secrets.JwtIssuer }}
+          NodeUptime_Headless__JwtSecretKey: ${{ secrets.JwtSecretKey }}
+          NodeUptime_PagerDuty__Enabled: true
+          NodeUptime_PagerDuty__RoutingKeys__Odin: ${{ secrets.OdinRoutingKey }}
+          NodeUptime_PagerDuty__RoutingKeys__Heimdall: ${{ secrets.HeimdallRoutingKey }}
+
         run: |
           dotnet restore node-uptime.sln
           dotnet test node-uptime.sln
