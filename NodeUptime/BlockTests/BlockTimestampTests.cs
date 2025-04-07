@@ -45,7 +45,7 @@ namespace NodeUptime.BlockTests
                     var blockTimestamp = DateTime.Parse(
                         response.ChainQuery.BlockQuery.Blocks[0].Timestamp
                     );
-                    var currentTime = DateTime.UtcNow;
+                    var currentTime = DateTime.UtcNow.AddHours(9); // KST = UTC+9
 
                     var timeDifference = (currentTime - blockTimestamp).TotalSeconds;
 
