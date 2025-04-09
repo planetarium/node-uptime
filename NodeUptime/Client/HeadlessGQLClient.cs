@@ -12,7 +12,7 @@ public class HeadlessGQLClient
     private readonly Uri _url;
     private readonly string? _issuer;
     private readonly string? _secret;
-    private const int RetryAttempts = 18;
+    private const int RetryAttempts = 12;
     private const int DelayInSeconds = 10;
 
     public HeadlessGQLClient(Uri url, string? issuer, string? secret)
@@ -22,7 +22,7 @@ public class HeadlessGQLClient
         _issuer = issuer;
         _secret = secret;
 
-        _httpClient.Timeout = TimeSpan.FromSeconds(30);
+        _httpClient.Timeout = TimeSpan.FromSeconds(5);
     }
 
     private string GenerateJwtToken(string secret, string issuer)
