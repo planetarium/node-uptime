@@ -12,8 +12,8 @@ public class HeadlessGQLClient
     private readonly Uri _url;
     private readonly string? _issuer;
     private readonly string? _secret;
-    private const int RetryAttempts = 60;
-    private const int DelayInSeconds = 5;
+    private const int RetryAttempts = 18;
+    private const int DelayInSeconds = 10;
 
     public HeadlessGQLClient(Uri url, string? issuer, string? secret)
     {
