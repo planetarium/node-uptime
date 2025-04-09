@@ -1,4 +1,6 @@
 using NodeUptime.Client;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace NodeUptime.BlockTests
 {
@@ -11,29 +13,45 @@ namespace NodeUptime.BlockTests
             _fixture = fixture;
         }
 
-        [Theory]
-        [InlineData("OdinRpc1", "Odin")]
-        [InlineData("HeimdallRpc1", "Heimdall")]
-        [InlineData("OdinRpc2", "Odin")]
-        [InlineData("HeimdallRpc2", "Heimdall")]
-        [InlineData("OdinValidator5", "Odin")]
-        [InlineData("HeimdallValidator1", "Heimdall")]
-        [InlineData("OdinEksRpc1", "Odin")]
-        [InlineData("HeimdallEksRpc1", "Heimdall")]
-        public async Task Block_Timestamp_Should_Be_Recent(string headlessKey, string routingKey)
+        [Fact]
+        public async Task Block_Timestamp_Should_Be_Recent()
         {
-            // Arrange
-            var headlessUrl = Constants.HEADLESS_URLS[headlessKey];
-            var headlessOptions = _fixture.HeadlessOptions.Value;
+            var testCases = new List<(string headlessKey, string routingKey)>
+            {
+                ("OdinRpc1", "Odin"),
+                ("HeimdallRpc1", "Heimdall"),
+                ("OdinRpc2", "Odin"),
+                ("HeimdallRpc2", "Heimdall"),
+                ("OdinValidator5", "Odin"),
+                ("HeimdallValidator1", "Heimdall"),
+                ("OdinEksRpc1", "Odin"),
+                ("HeimdallEksRpc1", "Heimdall")
+            };
 
-            var client = new HeadlessGQLClient(
-                new Uri(headlessUrl),
-                headlessOptions.JwtIssuer,
-                headlessOptions.JwtSecretKey
-            );
+            var tasks = testCases.Select(testCase => TestNodeAsync(testCase.headlessKey, testCase.routingKey)).ToList();
+            var results = await Task.WhenAll(tasks);
+            
+            var failures = results.Where(r => !string.IsNullOrEmpty(r)).ToList();
 
+            if (failures.Count > 0)
+            {
+                Assert.True(false, string.Join("\n", failures));
+            }
+        }
+
+        private async Task<string> TestNodeAsync(string headlessKey, string routingKey)
+        {
             try
             {
+                var headlessUrl = Constants.HEADLESS_URLS[headlessKey];
+                var headlessOptions = _fixture.HeadlessOptions.Value;
+
+                var client = new HeadlessGQLClient(
+                    new Uri(headlessUrl),
+                    headlessOptions.JwtIssuer,
+                    headlessOptions.JwtSecretKey
+                );
+
                 var (response, _) = await client.GetBlockTimestampAsync();
 
                 if (
@@ -62,7 +80,7 @@ namespace NodeUptime.BlockTests
                             errorMessage
                         );
 
-                        Assert.True(isValid, errorMessage);
+                        return errorMessage;
                     }
                     else
                     {
@@ -83,7 +101,7 @@ namespace NodeUptime.BlockTests
                         routingKey,
                         errorMessage
                     );
-                    Assert.True(false, errorMessage);
+                    return errorMessage;
                 }
             }
             catch (Exception ex)
@@ -93,8 +111,10 @@ namespace NodeUptime.BlockTests
                     routingKey,
                     $"Error checking {headlessKey} block timestamp: {ex.Message}"
                 );
-                throw;
+                return $"Error checking {headlessKey} block timestamp: {ex.Message}";
             }
+            
+            return string.Empty;
         }
     }
 }
