@@ -11,7 +11,7 @@ namespace NodeUptime
                 new Dictionary<string, string>
                 {
                     { "OdinJwt", "https://odin-jwt.nine-chronicles.com/graphql" },
-                    { "OdinRpc1", "https://odin-rpc-1.nine-chronicles.com/graphql" },
+                    // { "OdinRpc1", "https://odin-rpc-1.nine-chronicles.com/graphql" },
                     { "HeimdallRpc1", "https://heimdall-rpc-1.nine-chronicles.com/graphql" },
                     { "OdinRpc2", "https://odin-rpc-2.nine-chronicles.com/graphql" },
                     { "HeimdallRpc2", "https://heimdall-rpc-2.nine-chronicles.com/graphql" },
