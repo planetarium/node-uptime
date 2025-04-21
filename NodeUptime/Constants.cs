@@ -20,7 +20,7 @@ namespace NodeUptime
                         "HeimdallValidator1",
                         "https://heimdall-validator-1.nine-chronicles.com/graphql"
                     },
-                    { "OdinEksRpc1", "https://odin-eks-rpc-1.nine-chronicles.com/graphql" },
+                    // { "OdinEksRpc1", "https://odin-eks-rpc-1.nine-chronicles.com/graphql" },
                     { "HeimdallEksRpc1", "https://heimdall-eks-rpc-1.nine-chronicles.com/graphql" },
                 }
             );
