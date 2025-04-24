@@ -19,14 +19,12 @@ namespace NodeUptime.BlockTests
             var testCases = new List<(string headlessKey, string routingKey)>
             {
                 ("OdinJwt", "Odin"),
-                // ("OdinRpc1", "Odin"),
+                ("OdinRpc1", "Odin"),
                 ("HeimdallRpc1", "Heimdall"),
                 ("OdinRpc2", "Odin"),
                 ("HeimdallRpc2", "Heimdall"),
                 ("OdinValidator5", "Odin"),
                 ("HeimdallValidator1", "Heimdall"),
-                // ("OdinEksRpc1", "Odin"),
-                ("HeimdallEksRpc1", "Heimdall")
             };
 
             var tasks = testCases.Select(testCase => TestNodeAsync(testCase.headlessKey, testCase.routingKey)).ToList();
