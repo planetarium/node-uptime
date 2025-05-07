@@ -22,6 +22,7 @@ namespace NodeUptime.BlockTests
                 // ("OdinRpc1", "Odin"),
                 ("HeimdallRpc1", "Heimdall"),
                 ("OdinRpc2", "Odin"),
+                ("OdinRpc3", "Odin"),
                 ("HeimdallRpc2", "Heimdall"),
                 ("OdinValidator5", "Odin"),
                 ("HeimdallValidator1", "Heimdall"),
