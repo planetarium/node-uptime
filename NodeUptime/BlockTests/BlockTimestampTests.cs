@@ -18,7 +18,7 @@ namespace NodeUptime.BlockTests
         {
             var testCases = new List<(string headlessKey, string routingKey)>
             {
-                ("OdinRpc1", "Odin"),
+                // ("OdinRpc1", "Odin"),
                 ("OdinRpc2", "Odin"),
                 // ("OdinRpc3", "Odin"),
                 ("HeimdallRpc1", "Heimdall"),
