@@ -61,3 +61,12 @@ public class Block
     [JsonPropertyName("timestamp")]
     public string? Timestamp { get; set; }
 }
+
+public class PlanetRegistry
+{
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
+
+    [JsonPropertyName("rpcEndpoints")]
+    public Dictionary<string, string[]>? RpcEndpoints { get; set; }
+}
