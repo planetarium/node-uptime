@@ -1,6 +1,4 @@
 using NodeUptime.Client;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace NodeUptime.BlockTests
 {
@@ -8,41 +6,46 @@ namespace NodeUptime.BlockTests
     {
         private readonly HeadlessOptionsFixture _fixture;
 
+        private readonly IDictionary<string, string[]> _planetRegistry;
+
         public BlockTimestampTests(HeadlessOptionsFixture fixture)
         {
             _fixture = fixture;
+            _planetRegistry = new PlanetRegistryClient().Nodes;
+            foreach (var planet in _planetRegistry)
+            {
+                if (Constants.VALIDATOR_URLS.ContainsKey(planet.Key))
+                {
+                    _planetRegistry[planet.Key] = _planetRegistry[planet.Key]
+                        .Concat(Constants.VALIDATOR_URLS[planet.Key]).ToArray();
+                }
+            }
         }
 
         [Fact]
         public async Task Block_Timestamp_Should_Be_Recent()
         {
-            var testCases = new List<(string headlessKey, string routingKey)>
-            {
-                ("OdinRpc1", "Odin"),
-                ("OdinRpc2", "Odin"),
-                ("OdinRpc3", "Odin"),
-                ("HeimdallRpc1", "Heimdall"),
-                ("HeimdallRpc2", "Heimdall"),
-                ("OdinValidator5", "Odin"),
-                ("HeimdallValidator1", "Heimdall"),
-            };
+            Assert.Contains("odin", _planetRegistry.Keys.ToArray());
+            Assert.Contains("heimdall", _planetRegistry.Keys.ToArray());
 
-            var tasks = testCases.Select(testCase => TestNodeAsync(testCase.headlessKey, testCase.routingKey)).ToList();
-            var results = await Task.WhenAll(tasks);
-            
-            var failures = results.Where(r => !string.IsNullOrEmpty(r)).ToList();
-
-            if (failures.Count > 0)
+            foreach (var (planet, urls) in _planetRegistry)
             {
-                Assert.True(false, string.Join("\n", failures));
+                var tasks = urls.Select((url) => TestNodeAsync(url, planet, url)).ToList();
+                var results = await Task.WhenAll(tasks);
+
+                var failures = results.Where(r => !string.IsNullOrEmpty(r)).ToList();
+
+                if (failures.Count > 0)
+                {
+                    Assert.Fail(string.Join("\n", failures));
+                }
             }
         }
 
-        private async Task<string> TestNodeAsync(string headlessKey, string routingKey)
+        private async Task<string> TestNodeAsync(string headlessKey, string routingKey, string headlessUrl)
         {
             try
             {
-                var headlessUrl = Constants.HEADLESS_URLS[headlessKey];
                 var headlessOptions = _fixture.HeadlessOptions.Value;
 
                 var client = new HeadlessGQLClient(
@@ -112,7 +115,7 @@ namespace NodeUptime.BlockTests
                 );
                 return $"Error checking {headlessKey} block timestamp: {ex.Message}";
             }
-            
+
             return string.Empty;
         }
     }
