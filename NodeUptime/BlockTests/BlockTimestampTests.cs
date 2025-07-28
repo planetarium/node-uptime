@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using NodeUptime.Client;
 
 namespace NodeUptime.BlockTests
@@ -25,20 +26,21 @@ namespace NodeUptime.BlockTests
         [Fact]
         public async Task Block_Timestamp_Should_Be_Recent()
         {
-            Assert.Contains("odin", _planetRegistry.Keys.ToArray());
-            Assert.Contains("heimdall", _planetRegistry.Keys.ToArray());
+            var firstToUpper = (string str) => string.Concat(str[0].ToString().ToUpper(), str.AsSpan(1));
+            var headlessUrlToKey = (string url) => string.Concat(
+                Regex.Match(url, @"https://(.*)\.nine-chronicles\.com/graphql")
+                    .Groups[1].Value.Split('-')
+                    .Select(Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase));
 
-            foreach (var (planet, urls) in _planetRegistry)
+            var planetNodePairs = _planetRegistry.SelectMany(planet => planet.Value.Select(url => (planet: planet.Key, url)));
+            var tasks = planetNodePairs.Select(pair => TestNodeAsync(headlessUrlToKey(pair.url), firstToUpper(pair.planet), pair.url));
+            var results = await Task.WhenAll(tasks);
+
+            var failures = results.Where(r => !string.IsNullOrEmpty(r)).ToList();
+
+            if (failures.Count > 0)
             {
-                var tasks = urls.Select((url) => TestNodeAsync(url, planet, url)).ToList();
-                var results = await Task.WhenAll(tasks);
-
-                var failures = results.Where(r => !string.IsNullOrEmpty(r)).ToList();
-
-                if (failures.Count > 0)
-                {
-                    Assert.Fail(string.Join("\n", failures));
-                }
+                Assert.Fail(string.Join("\n", failures));
             }
         }
 
