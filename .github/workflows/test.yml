@@ -29,6 +29,7 @@ jobs:
           NodeUptime_PagerDuty__Enabled: true
           NodeUptime_PagerDuty__RoutingKeys__Odin: ${{ secrets.OdinRoutingKey }}
           NodeUptime_PagerDuty__RoutingKeys__Heimdall: ${{ secrets.HeimdallRoutingKey }}
+          NodeUptime_PagerDuty__RoutingKeys__Thor: ${{ secrets.ThorRoutingKey }}
 
         run: |
           dotnet restore node-uptime.sln
