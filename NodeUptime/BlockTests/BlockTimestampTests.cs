@@ -8,6 +8,10 @@ namespace NodeUptime.BlockTests
         private readonly HeadlessOptionsFixture _fixture;
 
         private readonly IDictionary<string, string[]> _planetRegistry;
+        private static readonly Regex LegacyHeadlessKeyRegex = new Regex(
+            @"https://(.*)\.nine-chronicles\.com/graphql",
+            RegexOptions.Compiled
+        );
 
         public BlockTimestampTests(HeadlessOptionsFixture fixture)
         {
@@ -27,13 +31,23 @@ namespace NodeUptime.BlockTests
         public async Task Block_Timestamp_Should_Be_Recent()
         {
             var firstToUpper = (string str) => string.Concat(str[0].ToString().ToUpper(), str.AsSpan(1));
-            var headlessUrlToKey = (string url) => string.Concat(
-                Regex.Match(url, @"https://(.*)\.nine-chronicles\.com/graphql")
-                    .Groups[1].Value.Split('-')
-                    .Select(Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase));
 
             var planetNodePairs = _planetRegistry.SelectMany(planet => planet.Value.Select(url => (planet: planet.Key, url)));
-            var tasks = planetNodePairs.Select(pair => TestNodeAsync(headlessUrlToKey(pair.url), firstToUpper(pair.planet), pair.url));
+            var tasks = planetNodePairs
+                .Select(pair =>
+                {
+                    var routingKey = firstToUpper(pair.planet);
+                    if (!TryLegacyHeadlessKeyFromUrl(pair.url, out var headlessKey))
+                    {
+                        // Exclude nodes whose URL doesn't match the legacy regex pattern.
+                        return null;
+                    }
+
+                    return TestNodeAsync(headlessKey, routingKey, pair.url);
+                })
+                .Where(t => t is not null)!
+                .Select(t => t!);
+
             var results = await Task.WhenAll(tasks);
 
             var failures = results.Where(r => !string.IsNullOrEmpty(r)).ToList();
@@ -42,6 +56,22 @@ namespace NodeUptime.BlockTests
             {
                 Assert.Fail(string.Join("\n", failures));
             }
+        }
+
+        private static bool TryLegacyHeadlessKeyFromUrl(string url, out string headlessKey)
+        {
+            var match = LegacyHeadlessKeyRegex.Match(url);
+            if (!match.Success)
+            {
+                headlessKey = string.Empty;
+                return false;
+            }
+
+            headlessKey = string.Concat(
+                match.Groups[1].Value.Split('-')
+                    .Select(Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase)
+            );
+            return !string.IsNullOrWhiteSpace(headlessKey);
         }
 
         private async Task<string> TestNodeAsync(string headlessKey, string routingKey, string headlessUrl)
@@ -76,7 +106,7 @@ namespace NodeUptime.BlockTests
                     if (!isValid)
                     {
                         var errorMessage =
-                            $"Block timestamp for {headlessKey} is too old. Difference: {timeDifference} seconds.";
+                            $"Block timestamp for {headlessKey} ({headlessUrl}) is too old. Difference: {timeDifference} seconds.";
 
                         await _fixture.PagerDutyService.SendAlertAsync(
                             headlessKey,
@@ -99,7 +129,7 @@ namespace NodeUptime.BlockTests
                 }
                 else
                 {
-                    var errorMessage = $"No valid block data received for {headlessKey}";
+                    var errorMessage = $"No valid block data received for {headlessKey} ({headlessUrl})";
                     await _fixture.PagerDutyService.SendAlertAsync(
                         headlessKey,
                         routingKey,
@@ -113,9 +143,9 @@ namespace NodeUptime.BlockTests
                 await _fixture.PagerDutyService.SendAlertAsync(
                     headlessKey,
                     routingKey,
-                    $"Error checking {headlessKey} block timestamp: {ex.Message}"
+                    $"Error checking {headlessKey} ({headlessUrl}) block timestamp: {ex.Message}"
                 );
-                return $"Error checking {headlessKey} block timestamp: {ex.Message}";
+                return $"Error checking {headlessKey} ({headlessUrl}) block timestamp: {ex.Message}";
             }
 
             return string.Empty;
